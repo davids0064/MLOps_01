@@ -17,9 +17,9 @@ public class HabitoEntity implements Serializable {
     @Column(name = "habito_id", updatable = false)
     private Long idHabito;
 
-    @Column(name = "habito", nullable = false)
-    private String habito;
-    @Column(name = "bueno")
+    @Column(name = "nombre_habito", nullable = false)
+    private String nombreHabito;
+    @Column(name = "buen_habito")
     private boolean bueno;
 
 }

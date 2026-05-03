@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface HabitoRepository extends JpaRepository<HabitoEntity, Long> {
+
+    HabitoEntity findByNombreHabito(String nombreHabito);
+
 }

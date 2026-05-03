@@ -1,21 +1,24 @@
 package com.mlops.pacientes.contoller;
 
+import com.mlops.pacientes.dto.Request;
+import com.mlops.pacientes.dto.Response;
 import com.mlops.pacientes.service.IPacienteService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/paciente")
+@RequestMapping("/api/predecir")
 @RequiredArgsConstructor
 public class PacienteController {
 
-    private final IPacienteService iPacienteService;
+    private IPacienteService iPacienteService;
 
-    @GetMapping("test")
-    public String test(){
-        return "test";
+    @PostMapping
+    public List<Response> predecir(@Validated @RequestBody Request request) throws Throwable{
+        return iPacienteService.predecir(request);
     }
 
 }
