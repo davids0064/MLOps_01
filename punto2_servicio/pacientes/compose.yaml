@@ -1,1 +1,25 @@
-services: {}
+services:
+  pacientes-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pacientes-api:1.0.0
+    container_name: pacientes-api
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:h2:mem:pacientes;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create
+      SPRING_H2_CONSOLE_ENABLED: "true"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/swagger-ui/index.html || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
