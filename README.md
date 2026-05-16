@@ -1,8 +1,3 @@
-## Participantes
-
-- David Salamanca Siachoque
-- Carlos Javier Cepeda
-
 # Pacientes API
 
 Servicio Spring Boot para consultar pacientes, sus habitos y una prediccion simple de nivel de enfermedad basada en la cantidad de habitos no saludables asociados a cada paciente.
@@ -13,7 +8,7 @@ El proyecto usa Spring Boot, Spring Data JPA, H2 en memoria y Springdoc OpenAPI 
 
 Al iniciar la aplicacion se autocarga informacion de prueba:
 
-- 235 pacientes.
+- 563 pacientes.
 - 10 habitos, entre saludables y no saludables.
 - Relaciones entre pacientes y habitos.
 
@@ -22,7 +17,8 @@ La prediccion se calcula contando solo los habitos no saludables:
 - `0` habitos malos: `NO ENFERMO`
 - `1` habito malo: `ENFERMEDAD LEVE`
 - `2` habitos malos: `ENFERMEDAD AGUDA`
-- `3+` habitos malos: `ENFERMEDAD CRÓNICA`
+- `3` habitos malos: `ENFERMEDAD CRÓNICA`
+- `3+` habitos malos y edad mayor o igual a 70: `ENFERMEDAD TERMINAL`
 
 ## Servicios
 
@@ -49,7 +45,7 @@ POST /api/predecir
 Ejemplo de consumo:
 
 ```bash
-curl -X GET "http://localhost:8081/api/predecir" \
+curl -X POST "http://localhost:8081/api/predecir" \
   -H "Content-Type: application/json" \
   -d '{
     "edad": [18, 90],
@@ -61,10 +57,11 @@ Respuesta esperada:
 
 ```json
 [
-  { "NO ENFERMO": 59 },
-  { "ENFERMEDAD LEVE": 59 },
-  { "ENFERMEDAD AGUDA": 59 },
-  { "ENFERMEDAD CRÓNICA": 58 }
+  { "NO ENFERMO": 113 },
+  { "ENFERMEDAD LEVE": 113 },
+  { "ENFERMEDAD AGUDA": 113 },
+  { "ENFERMEDAD CRÓNICA": 160 },
+  { "ENFERMEDAD TERMINAL": 64 }
 ]
 ```
 
@@ -106,6 +103,50 @@ Respuesta esperada:
     "prediccion": "NO ENFERMO"
   }
 ]
+```
+
+### 3. Reporte historico de predicciones
+
+Retorna las estadisticas acumuladas de las predicciones realizadas desde que el archivo de reporte existe.
+
+```http
+GET /api/predecir/reporte
+```
+
+Ejemplo de consumo:
+
+```bash
+curl -X GET "http://localhost:8081/api/predecir/reporte"
+```
+
+Respuesta esperada:
+
+```json
+{
+  "totalPorCategoria": {
+    "NO ENFERMO": 113,
+    "ENFERMEDAD LEVE": 113,
+    "ENFERMEDAD AGUDA": 113,
+    "ENFERMEDAD CRÓNICA": 160,
+    "ENFERMEDAD TERMINAL": 64
+  },
+  "ultimasPredicciones": [
+    {
+      "fecha": "2026-05-16T10:30:15.123",
+      "paciente": "Carlos Felipe Martinez Reyes",
+      "genero": "Masculino",
+      "edad": 82,
+      "prediccion": "ENFERMEDAD TERMINAL"
+    }
+  ],
+  "fechaUltimaPrediccion": "2026-05-16T10:30:15.123"
+}
+```
+
+El historial se guarda en un archivo de texto configurable con la variable `PACIENTES_REPORTE_PATH`. En Docker se usa por defecto:
+
+```text
+/tmp/pacientes/predicciones.log
 ```
 
 ## Filtros disponibles
