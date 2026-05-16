@@ -16,6 +16,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ""
       SPRING_JPA_HIBERNATE_DDL_AUTO: create
       SPRING_H2_CONSOLE_ENABLED: "true"
+      PACIENTES_REPORTE_PATH: /tmp/pacientes/predicciones.log
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/swagger-ui/index.html || exit 1"]

@@ -2,10 +2,12 @@ package com.mlops.pacientes.service.implement;
 
 import com.mlops.pacientes.dto.Request;
 import com.mlops.pacientes.dto.Response;
+import com.mlops.pacientes.dto.ReportePredicciones;
 import com.mlops.pacientes.jpa.entity.PacienteEntity;
 import com.mlops.pacientes.jpa.repository.HabitoPacienteRepository;
 import com.mlops.pacientes.jpa.repository.PacienteRepository;
 import com.mlops.pacientes.service.IPacienteService;
+import com.mlops.pacientes.service.RegistroPrediccionesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,17 +23,17 @@ public class PacienteService implements IPacienteService {
 
     private final PacienteRepository pacienteRepository;
     private final HabitoPacienteRepository habitoPacienteRepository;
+    private final RegistroPrediccionesService registroPrediccionesService;
 
     public List<Map<String, Integer>> predecir(Request request) {
-        Map<String, Integer> conteoPorPrediccion = new LinkedHashMap<>();
-        conteoPorPrediccion.put("NO ENFERMO", 0);
-        conteoPorPrediccion.put("ENFERMEDAD LEVE", 0);
-        conteoPorPrediccion.put("ENFERMEDAD AGUDA", 0);
-        conteoPorPrediccion.put("ENFERMEDAD CRÓNICA", 0);
+        Map<String, Integer> conteoPorPrediccion = inicializarConteo();
 
         obtenerPacientesFiltrados(request).stream()
-                .map(this::generarPrediccion)
-                .forEach(prediccion -> conteoPorPrediccion.merge(prediccion, 1, Integer::sum));
+                .map(this::crearResponse)
+                .forEach(response -> {
+                    registroPrediccionesService.registrar(response);
+                    conteoPorPrediccion.merge(response.prediccion(), 1, Integer::sum);
+                });
 
         List<Map<String, Integer>> resultado = new ArrayList<>();
         conteoPorPrediccion.forEach((prediccion, cantidad) -> resultado.add(Map.of(prediccion, cantidad)));
@@ -40,17 +42,13 @@ public class PacienteService implements IPacienteService {
 
     public List<Response> detallePrediccion(Request request) {
         return obtenerPacientesFiltrados(request).stream()
-                .map(p -> new Response(
-                        p.getPrimerNombre(),
-                        p.getSegundoNombre(),
-                        p.getPrimerApellido(),
-                        p.getSegundoApellido(),
-                        p.getGenero(),
-                        p.getEdad(),
-                        obtenerNombresHabitos(p),
-                        generarPrediccion(p)
-                ))
+                .map(this::crearResponse)
+                .peek(registroPrediccionesService::registrar)
                 .toList();
+    }
+
+    public ReportePredicciones reportePredicciones() {
+        return registroPrediccionesService.generarReporte();
     }
 
     private List<PacienteEntity> obtenerPacientesFiltrados(Request request) {
@@ -87,6 +85,25 @@ public class PacienteService implements IPacienteService {
                 .toList();
     }
 
+    private Response crearResponse(PacienteEntity paciente) {
+        return new Response(
+                paciente.getPrimerNombre(),
+                paciente.getSegundoNombre(),
+                paciente.getPrimerApellido(),
+                paciente.getSegundoApellido(),
+                paciente.getGenero(),
+                paciente.getEdad(),
+                obtenerNombresHabitos(paciente),
+                generarPrediccion(paciente)
+        );
+    }
+
+    private Map<String, Integer> inicializarConteo() {
+        Map<String, Integer> conteoPorPrediccion = new LinkedHashMap<>();
+        RegistroPrediccionesService.CATEGORIAS.forEach(categoria -> conteoPorPrediccion.put(categoria, 0));
+        return conteoPorPrediccion;
+    }
+
     private String generarPrediccion(PacienteEntity p) {
         int count = habitoPacienteRepository.findByPaciente(p).stream()
                 .filter(hp -> !hp.getHabito().isBueno())
@@ -95,6 +112,8 @@ public class PacienteService implements IPacienteService {
         if (count == 0) return "NO ENFERMO";
         if (count == 1) return "ENFERMEDAD LEVE";
         if (count == 2) return "ENFERMEDAD AGUDA";
-        return "ENFERMEDAD CRÓNICA";
+        if (count >= 3 && p.getEdad() >= 70) return "ENFERMEDAD TERMINAL";
+        if (count == 3) return "ENFERMEDAD CRÓNICA";
+        return "ENFERMEDAD TERMINAL";
     }
 }

@@ -2,6 +2,7 @@ package com.mlops.pacientes.contoller;
 
 import com.mlops.pacientes.dto.Request;
 import com.mlops.pacientes.dto.Response;
+import com.mlops.pacientes.dto.ReportePredicciones;
 import com.mlops.pacientes.service.IPacienteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -70,5 +71,21 @@ public class PacienteController {
     })
     public List<Map<String, Integer>> predecir(@RequestBody @Validated Request request){
         return iPacienteService.predecir(request);
+    }
+
+    @GetMapping("reporte")
+    @Operation(
+            summary = "Consultar reporte historico de predicciones",
+            description = "Retorna totales por categoria, las ultimas 5 predicciones y la fecha de la ultima prediccion registrada."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Reporte de predicciones generado correctamente.",
+                    content = @Content(schema = @Schema(implementation = ReportePredicciones.class))
+            )
+    })
+    public ReportePredicciones reportePredicciones() {
+        return iPacienteService.reportePredicciones();
     }
 }
