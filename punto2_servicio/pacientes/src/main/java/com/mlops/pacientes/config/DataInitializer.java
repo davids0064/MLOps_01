@@ -16,7 +16,7 @@ import java.util.List;
 @Configuration
 public class DataInitializer {
 
-    private static final int TOTAL_PACIENTES = 235;
+    private static final int TOTAL_PACIENTES = 563;
 
     private static final String[] PRIMEROS_NOMBRES_FEMENINOS = {
             "Maria", "Ana", "Laura", "Sofia", "Camila", "Valentina", "Isabella", "Paula", "Daniela", "Natalia"
@@ -107,7 +107,7 @@ public class DataInitializer {
         List<HabitoPacienteEntity> relaciones = new ArrayList<>();
         for (int i = 0; i < pacientes.size(); i++) {
             PacienteEntity paciente = pacientes.get(i);
-            int perfilHabitos = i % 4;
+            int perfilHabitos = i % 5;
             if (perfilHabitos == 0) {
                 relaciones.add(crearRelacion(paciente, habitos.get(i % 5)));
                 relaciones.add(crearRelacion(paciente, habitos.get((i + 2) % 5)));
@@ -118,6 +118,10 @@ public class DataInitializer {
                 relaciones.add(crearRelacion(paciente, habitos.get(5 + (i + 4) % 5)));
             } else if (perfilHabitos == 2) {
                 relaciones.add(crearRelacion(paciente, habitos.get(i % 5)));
+                relaciones.add(crearRelacion(paciente, habitos.get(5 + (i + 2) % 5)));
+                relaciones.add(crearRelacion(paciente, habitos.get(5 + (i + 4) % 5)));
+            } else if (perfilHabitos == 3) {
+                relaciones.add(crearRelacion(paciente, habitos.get(5 + i % 5)));
                 relaciones.add(crearRelacion(paciente, habitos.get(5 + (i + 2) % 5)));
                 relaciones.add(crearRelacion(paciente, habitos.get(5 + (i + 4) % 5)));
             } else {
