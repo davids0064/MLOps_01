@@ -71,5 +71,3 @@ Swagger UI disponible en: `http://localhost:8081/swagger-ui/index.html`
 ## Nota
 Inicialmente la colaboración al repositorio entre los integrantes del team se realizó mediante un fork al repositorio.
 <img width="1607" height="877" alt="image" src="https://github.com/user-attachments/assets/ce9e55a0-6739-43ad-a7c2-2a1276d8296b" />
-
-Test
