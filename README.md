@@ -65,3 +65,5 @@ docker compose up -d
 ```
 
 Swagger UI disponible en: `http://localhost:8081/swagger-ui/index.html`
+
+## Nota
