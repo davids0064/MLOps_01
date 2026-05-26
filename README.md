@@ -1,217 +1,67 @@
-# Pacientes API
+# MLOps — Unidad 2: Pipeline de Predicción de Enfermedades
 
-Servicio Spring Boot para consultar pacientes, sus habitos y una prediccion simple de nivel de enfermedad basada en la cantidad de habitos no saludables asociados a cada paciente.
+## Contexto del problema
 
-El proyecto usa Spring Boot, Spring Data JPA, H2 en memoria y Springdoc OpenAPI para exponer la documentacion Swagger.
+En el campo de la medicina existe una gran cantidad de información sobre pacientes, sin embargo, para enfermedades **huérfanas** (poco comunes) los datos disponibles son escasos. Se requiere un sistema capaz de predecir, a partir de los síntomas de un paciente, si es posible que sufra alguna enfermedad, tanto para patologías comunes (datos abundantes) como huérfanas (datos limitados).
 
-## Contexto
+## Propósito del repositorio
 
-Al iniciar la aplicacion se autocarga informacion de prueba:
+Este repositorio contiene las entregas de la **Unidad 2** del curso de Machine Learning Operations (MLOps). El objetivo es proponer y documentar un pipeline de ML completo (end-to-end) para abordar el problema descrito, y complementarlo con un servicio funcional que ilustra conceptos de predicción y exposición de resultados mediante una API REST.
 
-- 563 pacientes.
-- 10 habitos, entre saludables y no saludables.
-- Relaciones entre pacientes y habitos.
+## Estructura del repositorio
 
-La prediccion se calcula contando solo los habitos no saludables:
-
-- `0` habitos malos: `NO ENFERMO`
-- `1` habito malo: `ENFERMEDAD LEVE`
-- `2` habitos malos: `ENFERMEDAD AGUDA`
-- `3` habitos malos: `ENFERMEDAD CRÓNICA`
-- `3+` habitos malos y edad mayor o igual a 70: `ENFERMEDAD TERMINAL`
-
-## Servicios
-
-Base URL local con Docker:
-
-```text
-http://localhost:8081
+```
+precciones-mlops-U2/
+├── punto1_pipeline/
+│   └── description.md        # Descripción del pipeline ML end-to-end
+└── punto2_servicio/
+    └── pacientes/            # Servicio Spring Boot de predicción de pacientes
+        ├── Dockerfile
+        ├── compose.yaml
+        ├── README.md         # Documentación del servicio y endpoints
+        └── src/
 ```
 
-Swagger UI:
+## Puntos de la entrega
 
-```text
-http://localhost:8081/swagger-ui/index.html
-```
+### Punto 1 — Pipeline ML
 
-### 1. Resumen de predicciones
+Documento que describe el pipeline completo de ML para predecir enfermedades comunes y huérfanas, cubriendo:
 
-Retorna la cantidad de pacientes por nivel de enfermedad.
+- **Diseño**: restricciones, limitaciones y tipos de datos
+- **Desarrollo**: fuentes de datos, preprocesamiento, modelos propuestos (XGBoost, few-shot learning, transfer learning) y estrategias de validación
+- **Producción**: despliegue con Docker + DockerHub + servicio cloud, monitoreo de data/model drift y flujo de re-entrenamiento continuo
 
-```http
-POST /api/predecir
-```
+> Ver: [`punto1_pipeline/description.md`](punto1_pipeline/description.md)
 
-Ejemplo de consumo:
+### Punto 2 — Servicio de predicción
+
+API REST construida con **Spring Boot** que, dado un conjunto de pacientes con hábitos registrados, predice su nivel de enfermedad. Expone tres endpoints principales:
+
+| Endpoint | Descripción |
+|---|---|
+| `POST /api/predecir` | Resumen de predicciones por categoría |
+| `POST /api/predecir/detalle` | Predicción individual por paciente |
+| `GET /api/predecir/reporte` | Historial acumulado de predicciones |
+
+El servicio está contenedorizado y puede levantarse localmente con Docker Compose.
+
+> Ver: [`punto2_servicio/pacientes/README.md`](punto2_servicio/pacientes/README.md)
+
+## Tecnologías utilizadas
+
+| Componente | Tecnología |
+|---|---|
+| Servicio backend | Spring Boot 3, Spring Data JPA |
+| Base de datos | H2 (en memoria) |
+| Documentación API | Springdoc OpenAPI / Swagger |
+| Contenedorización | Docker / Docker Compose |
+
+## Ejecución rápida (Punto 2)
 
 ```bash
-curl -X POST "http://localhost:8081/api/predecir" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "edad": [18, 90],
-    "habitos": []
-  }'
-```
-
-Respuesta esperada:
-
-```json
-[
-  { "NO ENFERMO": 113 },
-  { "ENFERMEDAD LEVE": 113 },
-  { "ENFERMEDAD AGUDA": 113 },
-  { "ENFERMEDAD CRÓNICA": 160 },
-  { "ENFERMEDAD TERMINAL": 64 }
-]
-```
-
-### 2. Detalle de prediccion por paciente
-
-Retorna los pacientes filtrados con sus datos, habitos y prediccion individual.
-
-```http
-POST /api/predecir/detalle
-```
-
-Ejemplo de consumo:
-
-```bash
-curl -X POST "http://localhost:8081/api/predecir/detalle" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "edad": [25, 60],
-    "habitos": ["Actividad fisica regular"]
-  }'
-```
-
-Respuesta esperada:
-
-```json
-[
-  {
-    "primerNombre": "Maria",
-    "segundoNombre": "Fernanda",
-    "primerApellido": "Garcia",
-    "segundoApellido": "Jimenez",
-    "genero": "Femenino",
-    "edad": 34,
-    "habitos": [
-      "Actividad fisica regular",
-      "Dormir entre 7 y 8 horas",
-      "Chequeos medicos preventivos"
-    ],
-    "prediccion": "NO ENFERMO"
-  }
-]
-```
-
-### 3. Reporte historico de predicciones
-
-Retorna las estadisticas acumuladas de las predicciones realizadas desde que el archivo de reporte existe.
-
-```http
-GET /api/predecir/reporte
-```
-
-Ejemplo de consumo:
-
-```bash
-curl -X GET "http://localhost:8081/api/predecir/reporte"
-```
-
-Respuesta esperada:
-
-```json
-{
-  "totalPorCategoria": {
-    "NO ENFERMO": 113,
-    "ENFERMEDAD LEVE": 113,
-    "ENFERMEDAD AGUDA": 113,
-    "ENFERMEDAD CRÓNICA": 160,
-    "ENFERMEDAD TERMINAL": 64
-  },
-  "ultimasPredicciones": [
-    {
-      "fecha": "2026-05-16T10:30:15.123",
-      "paciente": "Carlos Felipe Martinez Reyes",
-      "genero": "Masculino",
-      "edad": 82,
-      "prediccion": "ENFERMEDAD TERMINAL"
-    }
-  ],
-  "fechaUltimaPrediccion": "2026-05-16T10:30:15.123"
-}
-```
-
-El historial se guarda en un archivo de texto configurable con la variable `PACIENTES_REPORTE_PATH`. En Docker se usa por defecto:
-
-```text
-/tmp/pacientes/predicciones.log
-```
-
-## Filtros disponibles
-
-El cuerpo de la solicitud acepta:
-
-```json
-{
-  "edad": [18, 90],
-  "habitos": ["Actividad fisica regular", "Consumo de tabaco"]
-}
-```
-
-- `edad`: lista con edad minima y edad maxima.
-- `habitos`: lista de nombres de habitos para filtrar pacientes relacionados.
-
-Para consultar todos los pacientes, se puede enviar:
-
-```json
-{
-  "edad": [],
-  "habitos": []
-}
-```
-
-## Levantar con Docker
-
-Construir la imagen:
-
-```bash
-docker compose build
-```
-
-Levantar el servicio:
-
-```bash
+cd punto2_servicio/pacientes
 docker compose up -d
 ```
 
-Ver estado:
-
-```bash
-docker compose ps
-```
-
-Ver logs:
-
-```bash
-docker compose logs -f pacientes-api
-```
-
-Detener el servicio:
-
-```bash
-docker compose down
-```
-
-## Puertos
-
-El contenedor expone internamente el puerto `8080`, pero el compose publica el servicio en el puerto local `8081`:
-
-```text
-localhost:8081 -> container:8080
-```
-
-## Base de datos
-
-La aplicacion usa H2 en memoria. Los datos se crean automaticamente al iniciar el servicio, por lo que al detener y recrear el contenedor se vuelve a cargar la informacion inicial.
+Swagger UI disponible en: `http://localhost:8081/swagger-ui/index.html`
