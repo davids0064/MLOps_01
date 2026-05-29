@@ -16,3 +16,24 @@ jobs:
         uses: thollander/actions-comment-pull-request@v3
         with:
           message: "CI/CD en acción. Ejecutando tareas …"
+
+  test:
+    name: Pruebas unitarias
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: unidad_1/punto2_servicio/pacientes
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Ejecutar pruebas unitarias
+        run: ./mvnw test
