@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: patients
+
+patients:
+  report:
+    path: ${PATIENTS_REPORT_PATH:/tmp/patients/predictions.log}

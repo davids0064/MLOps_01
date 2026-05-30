@@ -1,7 +1,0 @@
-spring:
-  application:
-    name: pacientes
-
-pacientes:
-  reporte:
-    path: ${PACIENTES_REPORTE_PATH:/tmp/pacientes/predicciones.log}
