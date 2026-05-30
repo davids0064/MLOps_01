@@ -10,8 +10,43 @@ Se requiere un sistema capaz de predecir, a partir de síntomas de un paciente, 
 
 De acuerdo con los requisitos y las etapas necesarias para el problema de predicción, se propone el siguiente diagrama de flujo:
 
+![Pipeline ML - Diagrama de flujo](assets/mlops_flow.png)
 
+El pipeline se organiza en cuatro etapas secuenciales bajo un esquema de **entrenamiento offline** orquestado desde GitHub con CI/CD automatizado:
 
+**1. Input Data**
+La información clínica proviene de sistemas hospitalarios y se define la estructura, esquema y almacenamiento de los datos. Los datos crudos se almacenan en **Amazon S3** (almacenamiento de objetos) y los metadatos relacionales en **Amazon RDS**, garantizando persistencia y trazabilidad desde el origen.
+
+**2. Data Prep**
+Con **Jupyter Notebooks** como entorno de trabajo se ejecutan tres pasos de preparación:
+- *Prepare*: limpieza, normalización y estandarización de variables.
+- *Label*: etiquetado de casos clínicos (supervisado / débilmente supervisado).
+- *Preprocess*: codificación de variables categóricas lista para entrenamiento.
+
+**3. Train & Tune**
+También sobre **Jupyter**, se realiza ingeniería de características (manual o automatizada) seguida de un ciclo iterativo de entrenamiento:
+- Entrenamiento y validación del modelo candidato.
+- Comparación de métricas entre modelos, selección del mejor y ajuste de hiperparámetros (*tuning*).
+- Re-entrenamiento con los parámetros optimizados hasta cumplir los umbrales de calidad.
+
+**4. Deploy & Monitor**
+Una vez aprobado el modelo, la etapa de despliegue incluye:
+- *Test y A/B Testing*: validación en entorno controlado frente al modelo en producción, apoyado en servicios **AWS**.
+- *Serialize model*: serialización del artefacto entrenado.
+- *Deploy*: empaquetado en contenedor **Docker** y despliegue unificando múltiples modelos bajo un mismo endpoint; el procesamiento distribuido se apoya en **Apache Spark**.
+- *Monitor*: supervisión continua de métricas de negocio y del comportamiento del modelo en producción.
+
+#### Tecnologías del pipeline
+
+| Etapa | Tecnología | Rol |
+|---|---|---|
+| Orquestación CI/CD | GitHub Actions | Automatiza el flujo offline de entrenamiento y despliegue |
+| Almacenamiento de datos | Amazon S3 | Datos crudos y artefactos del modelo |
+| Base de datos relacional | Amazon RDS | Metadatos, esquemas y registros clínicos estructurados |
+| Exploración y preparación | Jupyter Notebooks | Data prep, entrenamiento y experimentación iterativa |
+| Cómputo distribuido | Apache Spark | Procesamiento de datos a escala en la fase de despliegue |
+| Contenedorización | Docker | Empaquetado y portabilidad del modelo en producción |
+| Infraestructura cloud | AWS | A/B testing, hosting y monitoreo del servicio |
 
 ### 1.1 Restricciones y Limitaciones
 
