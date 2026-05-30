@@ -10,16 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: unidad_1/punto2_servicio/pacientes
+        working-directory: model/pacientes
 
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
 
-      - name: Configurar Java 21
+      - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
           cache: maven
 
@@ -45,5 +45,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
-          workdir: unidad_1/punto2_servicio/pacientes
+          workdir: model/pacientes
           snapshot: true
