@@ -76,4 +76,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [3.0.0] - 2026-05-31 -v1
+
+### Changed
+
+**CI/CD — GitHub Actions**
+- Job `publish` migrado de GitHub Container Registry (`ghcr.io`) a **Amazon ECR**: se reemplaza la acción `elgohr/Publish-Docker-Github-Action` por `aws-actions/amazon-ecr-login@v2` con autenticación OIDC mediante `aws-actions/configure-aws-credentials@v4`.
+- Permisos del job `publish` actualizados: `packages: write` reemplazado por `id-token: write` (requerido para OIDC con AWS).
+- La imagen se publica con dos tags: el SHA del commit (`${{ github.sha }}`) y `latest`.
+- Región AWS configurada en `us-east-2`.
+- Secret requerido: `AWS_ROLE_ARN` con el ARN del IAM Role configurado para el proveedor OIDC de GitHub.
+
+---
+
 <!-- releases futuras se agregan encima de esta línea -->
