@@ -27,26 +27,40 @@ jobs:
         run: ./mvnw test
 
   publish:
-    name: Publicar imagen en GitHub Packages
+    name: Publicar imagen en Amazon ECR
     runs-on: ubuntu-latest
     needs: test
     permissions:
-      packages: write
+      id-token: write
       contents: read
 
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
 
-      - name: Publicar imagen Docker en GHCR
-        uses: elgohr/Publish-Docker-Github-Action@v5
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          name: jhavierc/predicciones-mlops-u2/pacientes
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: ghcr.io
-          workdir: model/pacientes
-          snapshot: true
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-2
+
+      - name: Verificar identidad AWS
+        run: aws sts get-caller-identity
+
+      - name: Login en Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Construir y publicar imagen en ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: predicciones-mlops-u2/pacientes
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./model/pacientes
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
   release:
     name: Crear release en GitHub
