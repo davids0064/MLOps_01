@@ -89,4 +89,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [3.0.0] - 2026-05-31 -v2
+
+### Added
+
+**Infraestructura — AWS Fargate**
+- Archivo `.aws/task-definition.json`: template de task definition para ECS Fargate con familia `predicciones-mlops-u2`, 0.25 vCPU (256), 512 MB de memoria, red `awsvpc`, logs en CloudWatch (`/ecs/predicciones-mlops-u2`) y variable de entorno `PATIENTS_REPORT_PATH`.
+
+### Changed
+
+**CI/CD — GitHub Actions**
+- Job `publish` expone outputs `ecr-registry` e `image-tag` para ser consumidos por el job de despliegue.
+- Nuevo job `deploy` (antes de `release`) que despliega en **AWS ECS Fargate** usando las acciones oficiales `aws-actions/amazon-ecs-render-task-definition@v1` y `aws-actions/amazon-ecs-deploy-task-definition@v2`: inyecta la imagen ECR recién publicada en la task definition y actualiza el servicio `predicciones-mlops-u2-service` en el cluster `predicciones-mlops-u2-cluster`, esperando estabilidad antes de continuar.
+- Job `release` actualizado para depender de `deploy` (antes dependía de `publish`).
+
+---
+
 <!-- releases futuras se agregan encima de esta línea -->
