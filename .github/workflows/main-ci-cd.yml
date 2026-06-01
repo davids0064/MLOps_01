@@ -33,6 +33,9 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    outputs:
+      ecr-registry: ${{ steps.login-ecr.outputs.registry }}
+      image-tag: ${{ github.sha }}
 
     steps:
       - name: Checkout del código
@@ -62,10 +65,44 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
+  deploy:
+    name: Desplegar en AWS Fargate
+    runs-on: ubuntu-latest
+    needs: publish
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Actualizar imagen en task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: .aws/task-definition.json
+          container-name: pacientes
+          image: ${{ needs.publish.outputs.ecr-registry }}/predicciones-mlops-u2/pacientes:${{ needs.publish.outputs.image-tag }}
+
+      - name: Desplegar en ECS Fargate
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: predicciones-mlops-u2-service
+          cluster: predicciones-mlops-u2-cluster
+          wait-for-service-stability: true
+
   release:
     name: Crear release en GitHub
     runs-on: ubuntu-latest
-    needs: publish
+    needs: deploy
     permissions:
       contents: write
 
